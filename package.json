@@ -1,0 +1,116 @@
+{
+  "name": "devpulse",
+  "displayName": "DevPulse - Proof of Work Tracker",
+  "description": "Beautiful coding activity tracker with shareable visualizations. Track your coding journey, earn achievements, and share your progress.",
+  "version": "1.0.0",
+  "publisher": "devpulse",
+  "icon": "assets/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devpulse/vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "productivity",
+    "tracking",
+    "coding stats",
+    "heatmap",
+    "achievements",
+    "wrapped"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "devpulse.showDashboard",
+        "title": "DevPulse: Show Dashboard"
+      },
+      {
+        "command": "devpulse.generateShareCard",
+        "title": "DevPulse: Generate Share Card"
+      },
+      {
+        "command": "devpulse.exportData",
+        "title": "DevPulse: Export Data"
+      },
+      {
+        "command": "devpulse.importData",
+        "title": "DevPulse: Import Data"
+      },
+      {
+        "command": "devpulse.toggleTracking",
+        "title": "DevPulse: Toggle Tracking"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "devpulse.showDashboard"
+        },
+        {
+          "command": "devpulse.generateShareCard"
+        },
+        {
+          "command": "devpulse.exportData"
+        },
+        {
+          "command": "devpulse.importData"
+        },
+        {
+          "command": "devpulse.toggleTracking"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DevPulse",
+      "properties": {
+        "devpulse.idleTimeout": {
+          "type": "number",
+          "default": 120,
+          "description": "Seconds of inactivity before marking as idle"
+        },
+        "devpulse.focusSessionMin": {
+          "type": "number",
+          "default": 25,
+          "description": "Minutes for a focus session"
+        },
+        "devpulse.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show activity in status bar"
+        },
+        "devpulse.dataRetentionDays": {
+          "type": "number",
+          "default": 365,
+          "description": "Days of history to keep"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  }
+}
