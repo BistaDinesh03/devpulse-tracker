@@ -7,7 +7,7 @@
 <p align="center">Local-first coding activity tracker for VS Code.<br>Heatmaps, streaks, projects, and shareable summaries — all stored on your machine.</p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code-v7.1.1-blue" alt="Version"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code-v7.1.2-blue" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
 </p>
 
@@ -18,19 +18,19 @@
 Three screens. That's all you need to understand DevPulse.
 
 <p align="center">
-  <img src="assets/Screenshot%202026-07-17%20212359.png" width="100%" alt="Dashboard overview">
+  <img src="assets/screenshot-1.png" width="100%" alt="Dashboard overview">
 </p>
 
 **Your daily dashboard.** Active time, streak, goals, heatmap, and weekly trend — everything updates live as you code.
 
 <p align="center">
-  <img src="assets/Screenshot%202026-07-17%20212431.png" width="100%" alt="Insights and projects">
+  <img src="assets/screenshot-2.png" width="100%" alt="Insights and projects">
 </p>
 
 **Know where your time goes.** Weekly comparisons show trends. Project cards break down hours per workspace. Language stats reveal what you actually write.
 
 <p align="center">
-  <img src="assets/Screenshot%202026-07-17%20212502.png" width="100%" alt="Share card and wrapped">
+  <img src="assets/screenshot-3.png" width="100%" alt="Share card and wrapped">
 </p>
 
 **Share your progress.** Generate styled cards for LinkedIn or Twitter. Open your annual Wrapped for a full-screen review of your year in code.

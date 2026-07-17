@@ -2,7 +2,7 @@
   "name": "devpulse-code",
   "displayName": "DevPulse - Activity Tracker",
   "description": "Beautiful coding activity tracker with live dashboard, GitHub-style heatmap, streak tracking, language stats & shareable cards. Privacy-first, works offline.",
-  "version": "7.1.1",
+  "version": "7.1.2",
   "publisher": "bistadev",
   "icon": "images/icon.png",
   "repository": {
