@@ -1,14 +1,14 @@
 {
-  "name": "devpulse",
-  "displayName": "DevPulse - Proof of Work Tracker",
-  "description": "Beautiful coding activity tracker with shareable visualizations. Track your coding journey, earn achievements, and share your progress.",
-  "version": "1.0.0",
-  "publisher": "devpulse",
-  "icon": "assets/icon.png",
+  "name": "devpulse-code",
+  "displayName": "DevPulse - Activity Tracker",
+  "description": "Beautiful coding activity tracker with live dashboard, GitHub-style heatmap, streak tracking, language stats & shareable cards. Privacy-first, works offline.",
+  "version": "7.1.0",
+  "publisher": "bistadev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/devpulse/vscode-extension"
+    "url": "https://github.com/BistaDinesh03/devpulse-tracker"
   },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -21,13 +21,21 @@
     "tracking",
     "coding stats",
     "heatmap",
-    "achievements",
-    "wrapped"
+    "activity tracker",
+    "streak",
+    "developer tools",
+    "code time",
+    "wakatime alternative",
+    "github contributions"
   ],
+  "galleryBanner": {
+    "color": "#0d1117",
+    "theme": "dark"
+  },
   "activationEvents": [
-    "*"
+    "onStartupFinished"
   ],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -35,82 +43,76 @@
         "title": "DevPulse: Show Dashboard"
       },
       {
-        "command": "devpulse.generateShareCard",
-        "title": "DevPulse: Generate Share Card"
+        "command": "devpulse.wrapped",
+        "title": "DevPulse: Open Yearly Wrapped"
+      },
+      {
+        "command": "devpulse.wrappedMonthly",
+        "title": "DevPulse: Open Monthly Wrapped"
+      },
+      {
+        "command": "devpulse.shareCard",
+        "title": "DevPulse: Copy Share Card"
       },
       {
         "command": "devpulse.exportData",
         "title": "DevPulse: Export Data"
-      },
-      {
-        "command": "devpulse.importData",
-        "title": "DevPulse: Import Data"
-      },
-      {
-        "command": "devpulse.toggleTracking",
-        "title": "DevPulse: Toggle Tracking"
       }
     ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "devpulse.showDashboard"
-        },
-        {
-          "command": "devpulse.generateShareCard"
-        },
-        {
-          "command": "devpulse.exportData"
-        },
-        {
-          "command": "devpulse.importData"
-        },
-        {
-          "command": "devpulse.toggleTracking"
-        }
-      ]
-    },
     "configuration": {
       "title": "DevPulse",
       "properties": {
-        "devpulse.idleTimeout": {
+        "devpulse.goals.dailyTime": {
           "type": "number",
-          "default": 120,
-          "description": "Seconds of inactivity before marking as idle"
+          "default": 240,
+          "description": "Daily coding time goal (minutes)"
         },
-        "devpulse.focusSessionMin": {
+        "devpulse.goals.dailyLines": {
           "type": "number",
-          "default": 25,
-          "description": "Minutes for a focus session"
+          "default": 500,
+          "description": "Daily lines written goal"
+        },
+        "devpulse.goals.dailySessions": {
+          "type": "number",
+          "default": 3,
+          "description": "Daily focus sessions goal"
+        },
+        "devpulse.goals.weeklyTime": {
+          "type": "number",
+          "default": 1200,
+          "description": "Weekly coding time goal (minutes)"
+        },
+        "devpulse.goals.weeklyDays": {
+          "type": "number",
+          "default": 5,
+          "description": "Weekly days coded goal"
+        },
+        "devpulse.goals.monthlyTime": {
+          "type": "number",
+          "default": 4800,
+          "description": "Monthly coding time goal (minutes)"
+        },
+        "devpulse.goals.monthlyDays": {
+          "type": "number",
+          "default": 20,
+          "description": "Monthly days coded goal"
         },
         "devpulse.showStatusBar": {
           "type": "boolean",
           "default": true,
           "description": "Show activity in status bar"
-        },
-        "devpulse.dataRetentionDays": {
-          "type": "number",
-          "default": 365,
-          "description": "Days of history to keep"
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile",
-    "lint": "eslint src --ext ts",
     "package": "vsce package",
     "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
     "@types/vscode": "^1.80.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "typescript": "^5.0.0"
   }
 }

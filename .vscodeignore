@@ -1,8 +1,5 @@
 .vscode/**
-.git/**
+*.vsix
 node_modules/**
-src/**
-tsconfig.json
-.gitignore
-eslint.config.mjs
-**/*.map
+test.js
+create-files.bat

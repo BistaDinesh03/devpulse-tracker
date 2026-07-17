@@ -1,114 +1,188 @@
-# ⚡ DevPulse - Proof of Work Tracker
+<p align="center">
+  <img src="assets/icon.png" width="96" height="96" alt="DevPulse">
+</p>
 
-Beautiful, automatic coding activity tracker for VS Code. Track your coding journey, earn achievements, and share your progress with stunning visualizations.
+<h1 align="center">DevPulse</h1>
 
-![DevPulse Dashboard](assets/dashboard.png)
+<p align="center">Local-first coding activity tracker for VS Code.<br>Heatmaps, streaks, projects, and shareable summaries — all stored on your machine.</p>
 
-## ✨ Features
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code-v7.1.0-blue" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="#privacy"><img src="https://img.shields.io/badge/privacy-local-333" alt="Privacy"></a>
+</p>
 
-### 📊 Automatic Activity Tracking
-- **Keystroke Analytics**: Tracks every character typed vs pasted
-- **Smart Idle Detection**: Automatically pauses when you're away
-- **Error Resolution**: Counts bugs squashed from VS Code diagnostics
-- **Focus Sessions**: Detects 25+ minute coding streaks
-- **File Activity**: Monitors files created, modified, and saved
+---
 
-### 🎨 Beautiful Visualizations
-- **Activity Heatmap**: 52-week GitHub-style contribution grid with enhanced design
-- **Progress Ring**: Animated daily coding time visualization
-- **Weekly Reports**: Bar charts showing your weekly productivity
-- **Real-time Updates**: Smooth animations as you code
+![Dashboard](assets/hero-dashboard.png)
 
-### 🏆 Achievement System
-- **10+ Achievements**: From "Night Owl" to "Bug Centurion"
-- **Confetti Celebrations**: Animated celebrations on unlock
-- **Rare Achievements**: Special golden achievements for exceptional feats
-- **Progress Tracking**: See your progress toward each achievement
+*The DevPulse dashboard shows your day at a glance: active time, streak, goals, and activity heatmap.*
 
-### 📸 Share Card Generator
-- **One-Click Sharing**: Generate beautiful shareable images
-- **Professional Design**: Minimal dark theme perfect for social media
-- **Key Stats**: Hours coded, lines written, bugs fixed, streaks
-- **Twitter/LinkedIn Ready**: 1200×630px format
+---
 
-## 🚀 Quick Start
+## Why DevPulse
 
-1. Install DevPulse from VS Code Marketplace
-2. Start coding! Tracking begins automatically
-3. Click the flame icon in the status bar to view your dashboard
-4. Use `Cmd/Ctrl + Shift + P` and type "DevPulse" to access commands
+DevPulse runs silently in the background while you work. It tracks real coding time — not idle time, not window focus alone — and surfaces patterns you can act on.
 
-## ⌨️ Commands
+- **Build a daily habit.** The streak counter shows how many consecutive days you've written code. Missing a day is visible. Consistency becomes tangible.
+- **Know where your time goes.** Project cards break down hours per workspace. See which project dominated your week.
+- **Spot trends before they become problems.** Weekly insights compare this week to last week — time, lines, and focus sessions — so you can catch a dip early.
+- **Your data never leaves your computer.** No accounts, no cloud sync, no telemetry. The extension works offline and stores everything in a local JSON file.
 
-- `DevPulse: Show Dashboard` - Opens the beautiful dashboard
-- `DevPulse: Generate Share Card` - Creates a shareable card
-- `DevPulse: Export Data` - Export your tracking data
-- `DevPulse: Import Data` - Import previously exported data
-- `DevPulse: Toggle Tracking` - Pause/resume activity tracking
+---
 
-## 🎯 Achievements
+## Features
 
-| Achievement | Description | Icon |
-|------------|-------------|------|
-| Night Owl | Code after midnight | 🦉 |
-| Bug Slayer | Fix 10 bugs in a day | ⚔️ |
-| Marathon | 4+ hour coding streak | 🏃 |
-| Century | 1000+ lines in a day | 💯 |
-| Early Bird | Code before 6 AM | 🌅 |
-| 7 Day Streak | Code every day for a week | 🔥 |
-| Bug Centurion | Fix 100 total bugs | 🛡️ |
-| Polyglot | 5+ languages in a day | 🌍 |
+### Dashboard
 
-## 🔒 Privacy First
+![Dashboard](assets/feature-dashboard.png)
 
-- **100% Local**: All data stays on your machine
-- **No Accounts**: No sign-up required
-- **No Analytics**: We don't collect any data
-- **Offline First**: Works completely offline
-- **You Own Your Data**: Export anytime
+The main view shows today's active time, current streak, deep work estimate, and goal progress. A 6-month activity heatmap and weekly bar chart provide context at a glance. Every section updates smoothly without page reloads.
 
-## ⚙️ Configuration
+---
 
-```json
-{
-  "devpulse.idleTimeout": 120,
-  "devpulse.focusSessionMin": 25,
-  "devpulse.showStatusBar": true,
-  "devpulse.dataRetentionDays": 365
-}
-📦 Installation
-From VS Code Marketplace
-Open VS Code
+### Goals
 
-Go to Extensions (Cmd/Ctrl+Shift+X)
+![Goals](assets/feature-goals.png)
 
-Search for "DevPulse"
+Set daily, weekly, and monthly targets for coding time, lines written, and focus sessions. Each goal displays current progress, remaining amount, and an estimated completion time. Completed goals dim to reduce visual noise.
 
-Click Install
+---
 
-Manual Installation
-Download the .vsix file from releases
+### Weekly Insights
 
-In VS Code, go to Extensions
+![Weekly Insights](assets/feature-insights.png)
 
-Click "..." → "Install from VSIX"
+A side-by-side comparison of this week versus last week. See changes in total coding time, average daily output, best day, and focus sessions. Arrows and percentages make direction clear — up is green, down is red.
 
-Select the downloaded file
+---
 
-🛠️ Development
-bash
-# Clone the repository
-git clone https://github.com/devpulse/vscode-extension
+### Projects
 
-# Install dependencies
-npm install
+![Projects](assets/feature-projects.png)
 
-# Build the extension
-npm run compile
+Every workspace folder is tracked as a project. Sort by total time, recent activity, or days active. Each card shows hours coded, files edited, and the languages used. The list updates automatically as you switch between projects.
 
-# Package the extension
-npm run package
-📄 License
-MIT License - see LICENSE for details
+---
 
-Built with ❤️ for developers who want to visualize their coding journey
+### Git Activity
+
+![Git Activity](assets/feature-git.png)
+
+When you open a Git repository, DevPulse reads your local commit history. The dashboard shows commits made today, this week, this month, and in total — along with your current branch and recent commit messages. No authentication required. Works entirely offline.
+
+---
+
+### Share Cards
+
+![Share Cards](assets/feature-share.png)
+
+Generate a styled summary of your coding activity. Four templates are included: Professional (gradient, LinkedIn-ready), Minimal (black and white), GitHub (dark theme grid), and Wrapped (annual report style). Each card is copied as HTML — paste it anywhere or screenshot for social media.
+
+---
+
+### Developer Wrapped
+
+![Developer Wrapped](assets/feature-wrapped.png)
+
+A full-screen, slide-based annual report showing your total hours, longest streak, top language, main project, and commits. Navigate with arrow keys or tap. Available for both yearly and monthly views.
+
+---
+
+## Demo
+
+![Demo](assets/demo.gif)
+
+*A short walkthrough showing DevPulse in action is coming soon.*
+
+---
+
+## Privacy
+
+- No cloud storage
+- No account required
+- No analytics or telemetry
+- Works completely offline
+- All data stored in a local JSON file inside VS Code's global storage directory
+- You can export and delete your data at any time
+
+---
+
+## Installation
+
+Search for **DevPulse** in the VS Code Extensions panel (`Ctrl+Shift+X`) or install from the [Marketplace](https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code).
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `DevPulse: Show Dashboard` | Open the main dashboard |
+| `DevPulse: Open Yearly Wrapped` | View your annual report |
+| `DevPulse: Open Monthly Wrapped` | View your monthly report |
+| `DevPulse: Copy Share Card` | Generate and copy a shareable card |
+| `DevPulse: Export Data` | Export all tracking data as JSON |
+
+---
+
+## Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `devpulse.goals.dailyTime` | `240` | Daily coding time goal (minutes) |
+| `devpulse.goals.dailyLines` | `500` | Daily lines written goal |
+| `devpulse.goals.dailySessions` | `3` | Daily focus sessions goal |
+| `devpulse.goals.weeklyTime` | `1200` | Weekly coding time goal (minutes) |
+| `devpulse.goals.weeklyDays` | `5` | Weekly active days goal |
+| `devpulse.goals.monthlyTime` | `4800` | Monthly coding time goal (minutes) |
+| `devpulse.goals.monthlyDays` | `20` | Monthly active days goal |
+| `devpulse.showStatusBar` | `true` | Show activity counter in status bar |
+
+---
+
+## Roadmap
+
+- Pomodoro Mode — timed focus sessions with break reminders
+- Custom Themes — personalize the dashboard appearance
+- More Share Card Templates — additional layouts and styles
+- Team Dashboard — compare stats across a team (local network only)
+- Enhanced Git Insights — pull request activity, code review stats
+- Export as PNG — one-click image export for share cards
+
+---
+
+## FAQ
+
+**Does DevPulse track me when I'm not coding?**
+No. It detects idle time and pauses tracking after 2 minutes of inactivity. It also pauses when VS Code loses focus.
+
+**Where is my data stored?**
+In VS Code's global storage directory (`globalStorageUri`). On Windows, this is typically `%APPDATA%/Code/User/globalStorage/`. The file is `devpulse.json`.
+
+**Can I move my data to another computer?**
+Yes. Use the `DevPulse: Export Data` command to save a JSON file, then import it on another machine using the extension's import feature.
+
+**Does this work with any language?**
+Yes. DevPulse tracks language usage based on file extensions and VS Code language IDs.
+
+**Will this slow down my editor?**
+No. Tracking runs on intervals (5 seconds for active time, 30 seconds for saves). Data operations are synchronous file writes with minimal overhead.
+
+---
+
+## Contributing
+
+Bug reports and feature requests are welcome on the [GitHub repository](https://github.com/BistaDinesh03/devpulse-tracker). Pull requests should target the `main` branch and include a description of the change.
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+<p align="center">
+  <sub>Built for developers who want to understand their work, not just count hours.</sub>
+</p>
