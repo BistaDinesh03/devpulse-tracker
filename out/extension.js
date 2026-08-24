@@ -46,6 +46,7 @@ const ACTIVE_TICK_MS = 5000;
 const SAVE_INTERVAL_MS = 30000;
 const STATUS_UPDATE_MS = 10000;
 const GIT_CACHE_MS = 60000;
+const MAX_VISIBLE_PROJECTS = 5;
 // ─── State ──────────────────────────────
 let storagePath = '';
 let sessionMs = 0;
@@ -76,7 +77,31 @@ function log(msg) { outputChannel.appendLine(`[${new Date().toISOString()}] ${ms
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const weekStartStr = (o = 0) => { const d = new Date(); d.setDate(d.getDate() - d.getDay() - o * 7); return d.toISOString().slice(0, 10); };
 const monthStartStr = () => new Date().toISOString().slice(0, 7);
-function formatDuration(ms) { const m = Math.floor(ms / 60000); return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`; }
+/**
+ * Format milliseconds into human-readable duration.
+ * Examples:
+ *   0ms → "0m"
+ *   59000ms → "0m"
+ *   60000ms → "1m"
+ *   3540000ms → "59m"
+ *   3600000ms → "1h"
+ *   3660000ms → "1h 1m"
+ *   7140000ms → "1h 59m"
+ *   7200000ms → "2h"
+ *   7260000ms → "2h 1m"
+ */
+function formatDuration(ms) {
+    if (ms <= 0)
+        return '0m';
+    const totalMinutes = Math.floor(ms / 60000);
+    if (totalMinutes < 60)
+        return `${totalMinutes}m`;
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (minutes === 0)
+        return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+}
 function formatNumber(n) { return n >= 1000 ? `${(n / 1000).toFixed(1)}K` : String(n); }
 function pct(c, t) { return Math.min(Math.round((c / t) * 100), 100); }
 function getProjectName(wp) { const f = vscode.workspace.workspaceFolders; if (f)
@@ -241,7 +266,7 @@ function disposeAll() { if (focusTimer)
     d.dispose(); if (statusBar)
     statusBar.dispose(); if (panel)
     panel.dispose(); outputChannel.dispose(); }
-// ─── CSS Design System (No Emojis, Codicons) ──
+// ─── CSS ────────────────────────────────
 const CSS = `
 :root{--r:8px;--p:16px;--g:10px;--t:150ms}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -252,7 +277,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .card-title{font-size:12px;font-weight:600;letter-spacing:-0.01em}
 .card-sub{font-size:10px;color:var(--vscode-descriptionForeground,#999)}
-/* Hero */
 .hero-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--g)}
 .hero{grid-row:span 2;background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:24px var(--p);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:border-color var(--t)}
 .hero:hover{border-color:var(--vscode-focusBorder,#007acc40)}
@@ -260,12 +284,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .hero-label{font-size:11px;color:var(--vscode-descriptionForeground,#999);margin-top:4px;text-transform:uppercase;letter-spacing:0.04em}
 .hero-trend{font-size:11px;margin-top:8px;padding:2px 10px;border-radius:10px;font-weight:500}
 .trend-up{background:#4ac76b18;color:#4ac76b}.trend-down{background:#e0555518;color:#e05555}.trend-neutral{background:var(--vscode-descriptionForeground,#999)10;color:var(--vscode-descriptionForeground,#999)}
-/* Metric */
 .metric{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:var(--p);display:flex;flex-direction:column;justify-content:center;transition:border-color var(--t)}
 .metric:hover{border-color:var(--vscode-focusBorder,#007acc40)}
 .metric-value{font-family:'Cascadia Code',monospace;font-size:20px;font-weight:500;font-feature-settings:"tnum"}
 .metric-label{font-size:10px;color:var(--vscode-descriptionForeground,#999);margin-top:2px;text-transform:uppercase;letter-spacing:0.04em}
-/* Goals */
 .goal-row{padding:6px 0;border-bottom:1px solid var(--vscode-panel-border,#47474718)}.goal-row:last-child{border-bottom:none}
 .goal-complete{opacity:0.5}
 .goal-info{display:flex;align-items:baseline;gap:6px;margin-bottom:3px}
@@ -277,13 +299,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .goal-complete .goal-fill{background:#4ac76b}
 .goal-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--vscode-descriptionForeground,#999)}
 .goal-pct{font-weight:600}.goal-check{color:#4ac76b;font-weight:700}
-/* Tabs */
 .tabs{display:flex;gap:1px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d4140);border-radius:6px;padding:2px}
 .tab{padding:4px 12px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--vscode-descriptionForeground,#999);border:none;background:none;transition:all var(--t)}
 .tab:hover{color:var(--vscode-editor-foreground,#ccc)}
 .tab.active{background:var(--vscode-input-background,#3c3c3c);color:var(--vscode-editor-foreground,#ccc);box-shadow:0 1px 2px #00000020}
 .tab-content{display:none}.tab-content.active{display:block}
-/* Heatmap */
 .hmg{display:flex;flex-wrap:wrap;gap:3px}
 .hmc{width:10px;height:10px;border-radius:2px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41);cursor:pointer;transition:transform 0.12s;outline:1px solid transparent}
 .hmc:focus-visible,.hmc:hover{transform:scale(1.4);z-index:5;outline-color:var(--vscode-focusBorder,#007acc);outline-offset:1px}
@@ -291,19 +311,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .hl3{background:var(--vscode-charts-green,#26a641);opacity:0.75}.hl4{background:var(--vscode-charts-green,#39d353)}
 .leg{display:flex;gap:3px;align-items:center;justify-content:flex-end;margin-top:8px;font-size:9px;color:var(--vscode-descriptionForeground,#999)}
 .legc{width:10px;height:10px;border-radius:2px}
-/* Weekly bars */
 .bars{display:flex;align-items:flex-end;gap:5px;height:48px}
 .bw{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .b{width:100%;max-width:30px;border-radius:3px 3px 0 0;min-height:3px;transition:height 0.3s ease}
 .bi{background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41)}.ba{background:var(--vscode-button-background,#007acc);opacity:0.4}
 .bt{background:var(--vscode-button-background,#007acc)}.bd{font-size:9px;color:var(--vscode-descriptionForeground,#999)}.bda{color:var(--vscode-button-background,#007acc);font-weight:600}
-/* Languages */
 .lr{display:flex;align-items:center;gap:8px;padding:4px 0;border-radius:4px;transition:background var(--t)}.lr:hover{background:var(--vscode-list-hoverBackground,#2a2d2e40)}
 .ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}.ln{flex:1;font-size:12px}
 .lp{font-family:'Cascadia Code',monospace;font-size:11px;color:var(--vscode-descriptionForeground,#999);width:32px;text-align:right}
 .lempty{font-size:12px;color:var(--vscode-descriptionForeground,#999);padding:20px;text-align:center;line-height:1.6}
 .lempty strong{color:var(--vscode-editor-foreground,#ccc);font-weight:500}
-/* Projects */
 .proj-card{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:12px;margin-bottom:6px;transition:border-color var(--t)}
 .proj-card:hover{border-color:var(--vscode-focusBorder,#007acc40)}
 .proj-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
@@ -314,7 +331,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .sort-btn{padding:3px 10px;border-radius:4px;font-size:10px;cursor:pointer;color:var(--vscode-descriptionForeground,#999);border:1px solid var(--vscode-panel-border,#474747);background:transparent;transition:all var(--t)}
 .sort-btn:hover,.sort-btn:focus-visible{color:var(--vscode-editor-foreground,#ccc);border-color:var(--vscode-focusBorder,#007acc)}
 .sort-btn.active{color:var(--vscode-button-foreground,#fff);background:var(--vscode-button-background,#007acc);border-color:var(--vscode-button-background,#007acc)}
-/* Insights */
+.show-more-btn{display:block;width:100%;padding:6px;margin-top:4px;border:1px solid var(--vscode-panel-border,#474747);border-radius:6px;background:transparent;color:var(--vscode-descriptionForeground,#999);font-size:11px;cursor:pointer;transition:all var(--t);font-family:inherit}
+.show-more-btn:hover{color:var(--vscode-editor-foreground,#ccc);background:var(--vscode-list-hoverBackground,#2a2d2e40)}
 .insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .insight-card{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:12px;display:flex;gap:10px;align-items:flex-start;transition:border-color var(--t)}
 .insight-card:hover{border-color:var(--vscode-focusBorder,#007acc40)}
@@ -323,7 +341,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .insight-label{font-size:10px;color:var(--vscode-descriptionForeground,#999);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:1px}
 .insight-value{font-family:'Cascadia Code',monospace;font-size:16px;font-weight:500;margin-bottom:1px;font-feature-settings:"tnum"}
 .insight-change{font-size:10px;font-weight:500}.insight-up{color:#4ac76b}.insight-down{color:#e05555}.insight-neutral{color:var(--vscode-descriptionForeground,#999)}
-/* Git */
 .git-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .git-repo{font-size:13px;font-weight:600}.git-branch{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--vscode-button-background,#007acc15);color:var(--vscode-button-background,#58a6ff);font-family:'Cascadia Code',monospace}
 .git-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
@@ -334,28 +351,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .git-msgs{border-top:1px solid var(--vscode-panel-border,#47474718);padding-top:6px}
 .git-msg-label{font-size:9px;color:var(--vscode-descriptionForeground,#999);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px}
 .git-msg{font-family:'Cascadia Code',monospace;font-size:11px;padding:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Wrapped banner */
 .wrapped-banner{background:linear-gradient(135deg,#1a133320,#1c103320);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:all var(--t)}
 .wrapped-banner:hover{border-color:var(--vscode-focusBorder,#007acc60);transform:translateY(-1px)}
 .wrapped-badge{display:inline-block;padding:3px 12px;border-radius:10px;font-size:10px;font-weight:600;background:var(--vscode-button-background,#007acc15);color:var(--vscode-button-background,#58a6ff);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em}
 .wrapped-big{font-size:36px;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--vscode-button-background,#58a6ff),#a371f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .wrapped-sub{font-size:11px;color:var(--vscode-descriptionForeground,#999);margin-top:2px}
-/* Footer */
 .footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .footer-summary{font-size:10px;color:var(--vscode-descriptionForeground,#999);display:flex;gap:6px;flex-wrap:wrap}
 .footer-summary strong{color:var(--vscode-editor-foreground,#ccc);font-weight:500}
-/* Buttons */
 .btn{padding:7px 16px;border:none;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;background:var(--vscode-button-background,#007acc);color:var(--vscode-button-foreground,#fff);transition:all var(--t);font-family:inherit}
 .btn:hover{background:var(--vscode-button-hoverBackground,#1c97ea)}
 .btn:focus-visible{outline:2px solid var(--vscode-focusBorder,#007acc);outline-offset:2px}
 .btn-secondary{background:transparent;border:1px solid var(--vscode-panel-border,#474747);color:var(--vscode-editor-foreground,#ccc)}
 .btn-secondary:hover{background:var(--vscode-list-hoverBackground,#2a2d2e)}
-/* Share modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:#00000060;z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:12px;padding:24px;max-width:520px;width:92%;max-height:80vh;overflow-y:auto}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:16px}
-/* Template picker - list style with preview */
 .template-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .template-item{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--vscode-panel-border,#474747);border-radius:8px;cursor:pointer;transition:all var(--t)}
 .template-item:hover{border-color:var(--vscode-focusBorder,#007acc);background:var(--vscode-list-hoverBackground,#2a2d2e40)}
@@ -367,27 +379,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .tp-wr{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:1px solid rgba(255,255,255,0.1)}
 .template-info{flex:1}.template-name{font-size:13px;font-weight:500}.template-desc{font-size:10px;color:var(--vscode-descriptionForeground,#999);margin-top:2px}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end}
-/* Tooltips */
 [data-tip]{position:relative}[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--vscode-editor-background,#1e1e1e);border:1px solid var(--vscode-panel-border,#474747);padding:3px 8px;border-radius:4px;font-size:10px;white-space:nowrap;z-index:100;margin-bottom:4px;pointer-events:none;color:var(--vscode-editor-foreground,#ccc)}
-/* Animations */
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 .ai{animation:fi 0.25s ease forwards;opacity:0}.d1{animation-delay:0.03s}.d2{animation-delay:0.06s}.d3{animation-delay:0.09s}.d4{animation-delay:0.12s}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--vscode-scrollbarSlider-background,#424242);border-radius:3px}
 :focus-visible{outline:2px solid var(--vscode-focusBorder,#007acc);outline-offset:1px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
 `;
-// ─── SVG Icons (Codicon-style, no emojis) ──
-const ICONS = {
-    clock: '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.2"/><polyline points="8,4 8,8 11,10" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>',
-    streak: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1c-2 3-4 5-4 7a4 4 0 008 0c0-2-2-4-4-7z" fill="currentColor"/></svg>',
-    chart: '<svg width="14" height="14" viewBox="0 0 16 16"><rect x="1" y="8" width="3" height="6" rx="0.5" fill="currentColor"/><rect x="6" y="5" width="3" height="9" rx="0.5" fill="currentColor"/><rect x="11" y="2" width="3" height="12" rx="0.5" fill="currentColor"/></svg>',
-    folder: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M1 3.5A1.5 1.5 0 012.5 2h3.5l2 2h5.5A1.5 1.5 0 0115 5.5v7a1.5 1.5 0 01-1.5 1.5h-12A1.5 1.5 0 011 12.5z" fill="currentColor"/></svg>',
-    git: '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="3" r="2" fill="currentColor"/><circle cx="6" cy="11" r="2" fill="currentColor"/><circle cx="12" cy="10" r="2" fill="currentColor"/><line x1="8" y1="5" x2="6.5" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="10.5" y1="8.5" x2="12" y2="10" stroke="currentColor" stroke-width="1.5"/></svg>',
-    target: '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="1" fill="currentColor"/></svg>',
-    code: '<svg width="14" height="14" viewBox="0 0 16 16"><polyline points="5,5 2,8 5,11" fill="none" stroke="currentColor" stroke-width="1.5"/><polyline points="11,5 14,8 11,11" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="9" y1="3" x2="7" y2="13" stroke="currentColor" stroke-width="1.5"/></svg>',
-    flame: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1.5C6 4.5 4 6.5 4 8.5a4 4 0 008 0c0-2-2-4-4-7z" fill="currentColor"/></svg>',
-    share: '<svg width="14" height="14" viewBox="0 0 16 16"><circle cx="4" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="3" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="12" cy="13" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="5.5" y1="6.5" x2="10.5" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="5.5" y1="9.5" x2="10.5" y2="11.5" stroke="currentColor" stroke-width="1.2"/></svg>',
-};
 // ─── HTML Components ────────────────────
 function goalBar(label, current, target, unit, done) {
     const p = pct(current, target);
@@ -395,14 +393,22 @@ function goalBar(label, current, target, unit, done) {
     const val = unit === 'min' ? formatDuration(current * 60000) : `${current} ${unit}`;
     const tgt = unit === 'min' ? formatDuration(target * 60000) : `${target} ${unit}`;
     const left = unit === 'min' ? formatDuration(r * 60000) : `${r} ${unit}`;
-    const eta = current > 0 && !done ? `Est. ${formatDuration(Math.floor((r / (current / (todayMs() / 60000))) * 60000))}` : '';
     return `<div class="goal-row${done ? ' goal-complete' : ''}">
         <div class="goal-info"><span class="goal-name">${label}</span><span class="goal-current">${val}</span><span class="goal-target">/ ${tgt}</span></div>
         <div class="goal-track"><div class="goal-fill" style="width:${p}%" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"></div></div>
-        <div class="goal-meta"><span class="goal-pct">${p}%</span>${done ? '<span class="goal-check">Complete</span>' : `<span>${left} left${eta ? ' · ' + eta : ''}</span>`}</div>
+        <div class="goal-meta"><span class="goal-pct">${p}%</span>${done ? '<span class="goal-check">Complete</span>' : `<span>${left} left</span>`}</div>
     </div>`;
 }
-function projectListHTML(sort) {
+function projectCardHTML(p) {
+    const h = Math.floor(p.totalMs / 3600000);
+    const d = p.daysActive.size;
+    const fl = p.totalFiles;
+    const topLangs = Object.keys(p.languages).slice(0, 2).join(', ');
+    const ago = Math.floor((Date.now() - p.lastOpened) / 86400000);
+    const as = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : `${ago}d ago`;
+    return `<div class="proj-card"><div class="proj-top"><span class="proj-name">${p.name}</span><span class="proj-ago">${as}</span></div><div class="proj-stats"><span>${h}h coded</span><span>${d} days</span><span>${fl} files</span>${topLangs ? `<span>${topLangs}</span>` : ''}</div></div>`;
+}
+function projectListHTML(sort, showAll = false) {
     const pa = Object.values(projects);
     if (!pa.length)
         return '<div class="lempty"><strong>No projects tracked yet.</strong><br>Open a workspace folder and start coding. DevPulse will automatically detect your project.</div>';
@@ -412,15 +418,16 @@ function projectListHTML(sort) {
         pa.sort((a, b) => b.lastOpened - a.lastOpened);
     else
         pa.sort((a, b) => b.daysActive.size - a.daysActive.size);
-    return pa.map(p => {
-        const h = Math.floor(p.totalMs / 3600000);
-        const d = p.daysActive.size;
-        const fl = p.totalFiles;
-        const topLangs = Object.keys(p.languages).slice(0, 2).join(', ');
-        const ago = Math.floor((Date.now() - p.lastOpened) / 86400000);
-        const as = ago === 0 ? 'Today' : ago === 1 ? 'Yesterday' : `${ago}d ago`;
-        return `<div class="proj-card"><div class="proj-top"><span class="proj-name">${p.name}</span><span class="proj-ago">${as}</span></div><div class="proj-stats"><span>${h}h coded</span><span>${d} days</span><span>${fl} files</span>${topLangs ? `<span>${topLangs}</span>` : ''}</div></div>`;
-    }).join('');
+    const visible = showAll ? pa : pa.slice(0, MAX_VISIBLE_PROJECTS);
+    const rows = visible.map(projectCardHTML).join('');
+    const remaining = pa.length - MAX_VISIBLE_PROJECTS;
+    if (!showAll && remaining > 0) {
+        return rows + `<button class="show-more-btn" onclick="showAllProjects()">Show all ${pa.length} projects</button>`;
+    }
+    if (showAll && pa.length > MAX_VISIBLE_PROJECTS) {
+        return rows + `<button class="show-more-btn" onclick="showLessProjects()">Show less</button>`;
+    }
+    return rows;
 }
 function gitHTML() {
     const g = getGitStats();
@@ -429,7 +436,7 @@ function gitHTML() {
     const msgs = g.recentMessages.length ? g.recentMessages.map(m => `<div class="git-msg">${m.slice(0, 64)}${m.length > 64 ? '\u2026' : ''}</div>`).join('') : '<div class="git-msg" style="opacity:0.4">No recent commits</div>';
     return `<div class="git-header"><span class="git-repo">${g.repoName}</span><span class="git-branch">${g.branch}</span></div><div class="git-grid"><div class="git-stat"><div class="git-stat-val">${g.commitsToday}</div><div class="git-stat-lbl">Today</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsWeek}</div><div class="git-stat-lbl">This Week</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsMonth}</div><div class="git-stat-lbl">This Month</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsTotal}</div><div class="git-stat-lbl">Total</div></div></div><div class="git-files">${g.filesChanged} files changed</div><div class="git-msgs"><div class="git-msg-label">Recent commits</div>${msgs}</div>`;
 }
-// ─── Dashboard Builder (Smooth updates, no flicker) ──
+// ─── Dashboard Builder ──────────────────
 function buildDashboardHTML() {
     const g = getGoalsConfig();
     const tm = todayMs();
@@ -488,9 +495,7 @@ function buildDashboardHTML() {
                 lv = 3;
             if (h > 4)
                 lv = 4;
-            const dayData = it ? { lines: tl, files: sessionFiles, langs: lg, sessions: ts } : savedData[k];
-            const tip = `${k}: ${formatDuration(ms)}${dayData ? ` | ${dayData.lines || 0} lines` : ''}`;
-            hm += `<div class="hmc hl${lv}" data-tip="${tip}"${it ? ' style="outline:1px solid var(--vscode-focusBorder,#007acc)"' : ''} tabindex="0" role="img" aria-label="${tip}"></div>`;
+            hm += `<div class="hmc hl${lv}" data-tip="${k}: ${formatDuration(ms)}"${it ? ' style="outline:1px solid var(--vscode-focusBorder,#007acc)"' : ''} tabindex="0" role="img" aria-label="${k}: ${formatDuration(ms)}"></div>`;
         }
     const wd_ = [];
     for (let i = 6; i >= 0; i--) {
@@ -557,7 +562,7 @@ function buildDashboardHTML() {
         { l: 'Lines', v: formatNumber(twl), c: lwl > 0 ? Math.round(((twl - lwl) / lwl) * 100) : 0, cl: lwl > 0 ? `${twl > lwl ? '+' : ''}${Math.round(((twl - lwl) / lwl) * 100)}%` : '' },
         { l: 'Sessions', v: String(tws), c: 0, cl: '25 min blocks' },
         { l: 'Longest', v: formatDuration(twls), c: 0, cl: '' },
-    ].map(x => `<div class="insight-card"><div class="insight-icon">${x.l === 'Coding time' ? ICONS.clock : x.l === 'Best day' ? ICONS.chart : x.l === 'Lines' ? ICONS.code : x.l === 'Sessions' ? ICONS.target : ICONS.streak}</div><div class="insight-body"><div class="insight-label">${x.l}</div><div class="insight-value">${x.v}</div>${x.cl ? `<div class="insight-change ${x.c > 0 ? 'insight-up' : x.c < 0 ? 'insight-down' : 'insight-neutral'}">${x.cl}</div>` : ''}</div></div>`).join('');
+    ].map(x => `<div class="insight-card"><div class="insight-icon">${x.l === 'Coding time' ? '&#9201;' : x.l === 'Best day' ? '&#128200;' : x.l === 'Lines' ? '&#9000;' : x.l === 'Sessions' ? '&#127919;' : '&#128293;'}</div><div class="insight-body"><div class="insight-label">${x.l}</div><div class="insight-value">${x.v}</div>${x.cl ? `<div class="insight-change ${x.c > 0 ? 'insight-up' : x.c < 0 ? 'insight-down' : 'insight-neutral'}">${x.cl}</div>` : ''}</div></div>`).join('');
     const projCount = Object.keys(projects).length;
     const tcClass = tr > 10 ? 'trend-up' : tr < -10 ? 'trend-down' : 'trend-neutral';
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DevPulse</title><style>${CSS}</style></head><body>
@@ -586,7 +591,8 @@ function generateShareCard(){vscode.postMessage({t:'shareCard',template:selected
 function openWrapped(){vscode.postMessage({t:'openWrapped',period:'yearly'})}
 function switchTab(t){document.querySelectorAll('.tab').forEach(e=>{e.classList.remove('active');e.setAttribute('aria-pressed','false')});document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));document.getElementById('tab-'+t).classList.add('active');event.target.classList.add('active');event.target.setAttribute('aria-pressed','true')}
 function sortProjects(s){vscode.postMessage({t:'sortProjects',sort:s});document.querySelectorAll('.sort-btn').forEach(e=>e.classList.remove('active'));event.target.classList.add('active')}
-// Smooth updates - only update changed values, no DOM flicker
+function showAllProjects(){vscode.postMessage({t:'showAllProjects'})}
+function showLessProjects(){vscode.postMessage({t:'showLessProjects'})}
 window.addEventListener('message',function(e){
  if(e.data.t==='u'){
   var t=document.getElementById('dv-time'), s=document.getElementById('dv-streak'), l=document.getElementById('dv-lines'), d=document.getElementById('dv-deep');
@@ -602,7 +608,7 @@ document.getElementById('shareModal').addEventListener('click',function(e){if(e.
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeShareModal()});
 </script></body></html>`;
 }
-// ─── Share Cards (Unique per template) ──
+// ─── Share Cards ────────────────────────
 function buildShareCardHTML(template) {
     const th = totalHours();
     const tl = totalLines();
@@ -701,7 +707,7 @@ function activate(context) {
     statusBar.text = '$(pulse) DevPulse';
     statusBar.show();
     disposables.push(statusBar);
-    statusTimer = setInterval(() => { const m = Math.floor(todayMs() / 60000); statusBar.text = m > 0 ? `$(flame) ${m}m` : '$(pulse) DevPulse'; }, STATUS_UPDATE_MS);
+    statusTimer = setInterval(() => { const m = Math.floor(todayMs() / 60000); statusBar.text = m > 0 ? `$(flame) ${formatDuration(todayMs())}` : '$(pulse) DevPulse'; }, STATUS_UPDATE_MS);
     disposables.push(vscode.commands.registerCommand('devpulse.showDashboard', () => { if (panel) {
         panel.reveal();
     }
@@ -711,8 +717,10 @@ function activate(context) {
         panel.webview.onDidReceiveMessage(m => { if (m.t === 'shareCard') {
             vscode.env.clipboard.writeText(buildShareCardHTML(m.template));
             vscode.window.showInformationMessage('Share card copied to clipboard');
-        } if (m.t === 'poll' && panel) { /* Smooth update via postMessage, no full reload */ } if (m.t === 'sortProjects' && panel)
-            panel.webview.postMessage({ t: 'projects', html: projectListHTML(m.sort) }); if (m.t === 'openWrapped' && panel)
+        } if (m.t === 'sortProjects' && panel)
+            panel.webview.postMessage({ t: 'projects', html: projectListHTML(m.sort) }); if (m.t === 'showAllProjects' && panel)
+            panel.webview.postMessage({ t: 'projects', html: projectListHTML(m.sort || 'time', true) }); if (m.t === 'showLessProjects' && panel)
+            panel.webview.postMessage({ t: 'projects', html: projectListHTML(m.sort || 'time', false) }); if (m.t === 'openWrapped' && panel)
             panel.webview.html = buildWrappedHTML(m.period ?? 'yearly'); });
     } panel.webview.html = buildDashboardHTML(); }), vscode.commands.registerCommand('devpulse.wrapped', () => { if (panel) {
         panel.reveal();
