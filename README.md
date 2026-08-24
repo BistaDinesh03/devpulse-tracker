@@ -21,7 +21,7 @@
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code%20Marketplace-DevPulse-blue?style=flat-square" alt="VS Code Marketplace"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"></a>
-  <a href="https://github.com/bistadev/devpulse"><img src="https://img.shields.io/badge/open--source-github-gray?style=flat-square" alt="Open Source"></a>
+  <a href="https://github.com/BistaDinesh03/devpulse-tracker"><img src="https://img.shields.io/badge/open--source-github-gray?style=flat-square" alt="Open Source"></a>
 </p>
 
 ---
