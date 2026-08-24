@@ -149,15 +149,9 @@ Yes. Use `DevPulse: Copy Share Card` to generate a styled summary with Professio
 
 DevPulse is open-source software licensed under the MIT license.
 
-<<<<<<< HEAD
-- [View the source code](https://github.com/bistadev/devpulse)
-- [Report issues or suggest features](https://github.com/bistadev/devpulse/issues)
-- [Contribute](https://github.com/bistadev/devpulse)
-=======
-- [View the source code](https://github.com/bistadinesh03/devpulse-tracker)
-- [Report issues or suggest features](https://github.com/bistadinesh03/devpulse-tracker/issues)
-- [Contribute](https://github.com/bistadinesh03/devpulse-tracker)
->>>>>>> 1533acb (Fixed extension name in README)
+- [View the source code](https://github.com/BistaDinesh03/devpulse-tracker)
+- [Report issues or suggest features](https://github.com/BistaDinesh03/devpulse-tracker/issues)
+- [Contribute](https://github.com/BistaDinesh03/devpulse-tracker)
 
 ---
 
