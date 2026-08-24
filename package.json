@@ -1,7 +1,7 @@
 {
   "name": "devpulse-code",
-  "displayName": "DevPulse - Activity Tracker",
-  "description": "Beautiful coding activity tracker with live dashboard, GitHub-style heatmap, streak tracking, language stats & shareable cards. Privacy-first, works offline.",
+  "displayName": "DevPulse - Coding Tracker",
+  "description": "Local-first coding activity tracker for VS Code. Track coding time, streaks, goals, projects, languages, Git activity, and weekly progress from a single dashboard. No account required.",
   "version": "7.1.3",
   "publisher": "bistadev",
   "icon": "images/icon.png",
@@ -18,16 +18,23 @@
     "Visualization"
   ],
   "keywords": [
-    "productivity",
-    "tracking",
-    "coding stats",
-    "heatmap",
-    "activity tracker",
-    "streak",
+    "coding tracker",
+    "coding time",
+    "coding activity",
+    "coding statistics",
+    "coding analytics",
+    "developer productivity",
+    "activity heatmap",
+    "coding streak",
+    "coding goals",
+    "project tracking",
+    "language statistics",
+    "git activity",
+    "local-first",
+    "privacy",
+    "offline",
     "developer tools",
-    "code time",
-    "wakatime alternative",
-    "github contributions"
+    "wakatime alternative"
   ],
   "galleryBanner": {
     "color": "#0d1117",
