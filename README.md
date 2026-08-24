@@ -1,19 +1,34 @@
 <p align="center">
-  <img src="images/icon.png" width="64" height="64" alt="DevPulse">
+  <img src="images/icon.png" width="80" height="80" alt="DevPulse">
 </p>
 
 <h1 align="center">DevPulse</h1>
 
-<p align="center">Local-first coding activity tracker for VS Code.</p>
+<p align="center">
+  <strong>See your coding time. Keep your data. No account required.</strong>
+</p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code-v7.1.2-blue" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  Local-first coding activity tracker for VS Code.
+</p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code">
+    <strong>➜ Install from Marketplace</strong>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code"><img src="https://img.shields.io/badge/VS%20Code%20Marketplace-DevPulse-blue?style=flat-square" alt="VS Code Marketplace"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"></a>
+  <a href="https://github.com/bistadev/devpulse"><img src="https://img.shields.io/badge/open--source-github-gray?style=flat-square" alt="Open Source"></a>
 </p>
 
 ---
 
-DevPulse is a local-first coding activity tracker for VS Code. It tracks your coding time, streaks, goals, projects, languages, Git activity, and weekly progress from a single dashboard. Your data stays on your machine.
+DevPulse automatically tracks your coding time, activity, and progress—right inside VS Code. See your streaks, goals, projects, and language breakdown from a beautiful dashboard. All data stays on your machine. No account. No telemetry. No external sync.
+
+**Perfect for developers who want to understand their coding habits without relying on cloud services.**
 
 ---
 
@@ -21,7 +36,7 @@ DevPulse is a local-first coding activity tracker for VS Code. It tracks your co
 
 ![DevPulse coding activity dashboard](assets/dashboard.png)
 
-See today's coding time, current streak, deep work, and progress on your daily goals. The Year in Code banner gives quick access to your annual summary.
+See today's coding time, current streak, deep work sessions, and progress on your daily goals. The Year in Code banner gives quick access to your annual summary.
 
 ---
 
@@ -59,21 +74,23 @@ Create a styled summary of your coding activity. Choose from Professional, Minim
 
 ## Features
 
-- Coding time tracking
-- Streaks and deep work
-- Daily, weekly, and monthly goals
-- Git activity and commit tracking
-- Project tracking
-- Language statistics
-- Weekly analytics
-- Activity heatmap
-- Yearly and monthly Wrapped summaries
-- Shareable progress cards
-- Local-first data with export
+- **Automatic time tracking** – Runs in the background; no manual entry needed
+- **Streaks and consistency** – Track your coding streaks to stay motivated
+- **Goals** – Set daily, weekly, and monthly targets and monitor progress
+- **Project breakdown** – See exactly where your time goes across workspaces
+- **Git integration** – Commits tracked alongside your coding time
+- **Activity heatmap** – Visualize your coding consistency at a glance
+- **Weekly and monthly analytics** – Detailed time breakdowns and statistics
+- **Language statistics** – Understand your programming language distribution
+- **Wrapped summaries** – Create shareable annual and monthly reports
+- **Export data** – Download everything as JSON anytime
+- **Works offline** – No internet required; all tracking happens locally
 
 ---
 
-## Privacy
+## Privacy First
+
+DevPulse keeps your coding data on your machine.
 
 - No account required
 - Data stored locally
@@ -83,14 +100,14 @@ Create a styled summary of your coding activity. Choose from Professional, Minim
 
 ---
 
-## Install
+## Installation
 
-1. Open VS Code.
-2. Open Extensions (`Ctrl+Shift+X`).
-3. Search for `DevPulse`.
-4. Install it.
+1. Open VS Code
+2. Go to Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`)
+3. Search for `DevPulse`
+4. Click **Install**
 
-Or install directly from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code).
+Or [install directly from the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code).
 
 ---
 
@@ -106,12 +123,44 @@ Or install directly from the [VS Code Marketplace](https://marketplace.visualstu
 
 ---
 
-## Local Data
+## FAQ
 
-DevPulse stores your tracking data locally. Use the `DevPulse: Export Data` command to save a copy of your data.
+**Is DevPulse free?**  
+Yes. DevPulse is completely free and open-source under the MIT license.
+
+**Does DevPulse require an account?**  
+No. It starts tracking immediately after installation with no signup, login, or API key needed.
+
+**Is DevPulse a WakaTime alternative?**  
+Yes. DevPulse is a local-first coding tracker for developers who prefer their data stored locally instead of on cloud servers.
+
+**Where is my data stored?**  
+All data is stored locally in your VS Code settings directory. Use `DevPulse: Export Data` to download it anytime.
+
+**Does DevPulse work offline?**  
+Yes. DevPulse requires no internet connection and tracks your coding time completely offline.
+
+**Can I share my progress?**  
+Yes. Use `DevPulse: Copy Share Card` to generate a styled summary with Professional, Minimal, GitHub, or Wrapped templates.
+
+---
+
+## Open Source
+
+DevPulse is open-source software licensed under the MIT license.
+
+- [View the source code](https://github.com/bistadev/devpulse)
+- [Report issues or suggest features](https://github.com/bistadev/devpulse/issues)
+- [Contribute](https://github.com/bistadev/devpulse)
+
+---
+
+<p align="center">
+  <strong><a href="https://marketplace.visualstudio.com/items?itemName=bistadev.devpulse-code">➜ Install DevPulse Now</a></strong>
+</p>
 
 ---
 
 ## License
 
-MIT
+MIT – See [LICENSE](LICENSE) for details.
