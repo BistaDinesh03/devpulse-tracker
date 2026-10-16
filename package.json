@@ -2,7 +2,7 @@
   "name": "devpulse-code",
   "displayName": "DevPulse - Coding Tracker",
   "description": "Local-first coding activity tracker for VS Code. Track coding time, streaks, goals, projects, languages, Git activity, and weekly progress from a single dashboard. No account required.",
-  "version": "7.1.4",
+  "version": "7.2.0",
   "publisher": "bistadev",
   "icon": "images/icon.png",
   "repository": {

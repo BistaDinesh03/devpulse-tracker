@@ -56,6 +56,7 @@ let sessionSaves = 0;
 let sessionLanguages = {};
 let focusSessions = 0;
 let focusStart = 0;
+let hourBuckets = {};
 let savedData = {};
 let projects = {};
 let activeProject = null;
@@ -268,25 +269,26 @@ function disposeAll() { if (focusTimer)
     panel.dispose(); outputChannel.dispose(); }
 // ─── CSS ────────────────────────────────
 const CSS = `
-:root{--r:8px;--p:16px;--g:10px;--t:150ms}
+:root{--r:8px;--p:16px;--g:12px;--t:150ms}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--vscode-editor-background,#1e1e1e);color:var(--vscode-editor-foreground,#ccc);padding:20px;font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
 .c{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:var(--g)}
 .card{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:var(--p);transition:border-color var(--t)}
 .card:hover{border-color:var(--vscode-focusBorder,#007acc40)}
 .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.card-title{font-size:12px;font-weight:600;letter-spacing:-0.01em}
+.card-title{font-size:13px;font-weight:600;letter-spacing:-0.01em;display:inline-flex;align-items:center;gap:5px}
+.card-title svg{flex-shrink:0;opacity:0.9}
 .card-sub{font-size:10px;color:var(--vscode-descriptionForeground,#999)}
 .hero-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--g)}
 .hero{grid-row:span 2;background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:24px var(--p);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:border-color var(--t)}
 .hero:hover{border-color:var(--vscode-focusBorder,#007acc40)}
-.hero-value{font-family:'Cascadia Code','JetBrains Mono',monospace;font-size:48px;font-weight:300;letter-spacing:-0.03em;line-height:1;font-feature-settings:"tnum"}
+.hero-value{font-family:'Cascadia Code','JetBrains Mono',monospace;font-size:56px;font-weight:300;letter-spacing:-0.03em;line-height:1;font-feature-settings:"tnum"}
 .hero-label{font-size:11px;color:var(--vscode-descriptionForeground,#999);margin-top:4px;text-transform:uppercase;letter-spacing:0.04em}
 .hero-trend{font-size:11px;margin-top:8px;padding:2px 10px;border-radius:10px;font-weight:500}
-.trend-up{background:#4ac76b18;color:#4ac76b}.trend-down{background:#e0555518;color:#e05555}.trend-neutral{background:var(--vscode-descriptionForeground,#999)10;color:var(--vscode-descriptionForeground,#999)}
+.trend-up{background:color-mix(in srgb,var(--vscode-charts-green,#4ac76b) 14%,transparent);color:var(--vscode-charts-green,#4ac76b)}.trend-down{background:color-mix(in srgb,var(--vscode-charts-red,#e05555) 14%,transparent);color:var(--vscode-charts-red,#e05555)}.trend-neutral{background:color-mix(in srgb,var(--vscode-descriptionForeground,#999) 14%,transparent);color:var(--vscode-descriptionForeground,#999)}
 .metric{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:var(--p);display:flex;flex-direction:column;justify-content:center;transition:border-color var(--t)}
 .metric:hover{border-color:var(--vscode-focusBorder,#007acc40)}
-.metric-value{font-family:'Cascadia Code',monospace;font-size:20px;font-weight:500;font-feature-settings:"tnum"}
+.metric-value{font-family:'Cascadia Code',monospace;font-size:18px;font-weight:500;font-feature-settings:"tnum"}
 .metric-label{font-size:10px;color:var(--vscode-descriptionForeground,#999);margin-top:2px;text-transform:uppercase;letter-spacing:0.04em}
 .goal-row{padding:6px 0;border-bottom:1px solid var(--vscode-panel-border,#47474718)}.goal-row:last-child{border-bottom:none}
 .goal-complete{opacity:0.5}
@@ -296,13 +298,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .goal-target{font-size:11px;color:var(--vscode-descriptionForeground,#999)}
 .goal-track{height:4px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41);border-radius:2px;overflow:hidden;margin-bottom:2px}
 .goal-fill{height:100%;border-radius:2px;background:var(--vscode-button-background,#007acc);transition:width 0.4s ease}
-.goal-complete .goal-fill{background:#4ac76b}
+.goal-complete .goal-fill{background:var(--vscode-charts-green,#4ac76b)}
 .goal-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--vscode-descriptionForeground,#999)}
-.goal-pct{font-weight:600}.goal-check{color:#4ac76b;font-weight:700}
+.goal-pct{font-weight:600}.goal-check{color:var(--vscode-charts-green,#4ac76b);font-weight:700}
 .tabs{display:flex;gap:1px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d4140);border-radius:6px;padding:2px}
 .tab{padding:4px 12px;border-radius:5px;font-size:11px;cursor:pointer;color:var(--vscode-descriptionForeground,#999);border:none;background:none;transition:all var(--t)}
 .tab:hover{color:var(--vscode-editor-foreground,#ccc)}
-.tab.active{background:var(--vscode-input-background,#3c3c3c);color:var(--vscode-editor-foreground,#ccc);box-shadow:0 1px 2px #00000020}
+.tab.active{background:var(--vscode-input-background,#3c3c3c);color:var(--vscode-editor-foreground,#ccc);box-shadow:0 1px 2px var(--vscode-widget-shadow,#00000020)}
 .tab-content{display:none}.tab-content.active{display:block}
 .hmg{display:flex;flex-wrap:wrap;gap:3px}
 .hmc{width:10px;height:10px;border-radius:2px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41);cursor:pointer;transition:transform 0.12s;outline:1px solid transparent}
@@ -340,9 +342,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .insight-body{flex:1;min-width:0}
 .insight-label{font-size:10px;color:var(--vscode-descriptionForeground,#999);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:1px}
 .insight-value{font-family:'Cascadia Code',monospace;font-size:16px;font-weight:500;margin-bottom:1px;font-feature-settings:"tnum"}
-.insight-change{font-size:10px;font-weight:500}.insight-up{color:#4ac76b}.insight-down{color:#e05555}.insight-neutral{color:var(--vscode-descriptionForeground,#999)}
+.insight-change{font-size:10px;font-weight:500}.insight-up{color:var(--vscode-charts-green,#4ac76b)}.insight-down{color:var(--vscode-charts-red,#e05555)}.insight-neutral{color:var(--vscode-descriptionForeground,#999)}
 .git-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.git-repo{font-size:13px;font-weight:600}.git-branch{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--vscode-button-background,#007acc15);color:var(--vscode-button-background,#58a6ff);font-family:'Cascadia Code',monospace}
+.git-repo{font-size:13px;font-weight:600}.git-branch{font-size:10px;padding:2px 8px;border-radius:8px;background:var(--vscode-badge-background,#007acc);color:var(--vscode-badge-foreground,#fff);font-family:'Cascadia Code',monospace}
 .git-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
 .git-stat{text-align:center;padding:8px 4px;background:var(--vscode-editor-inactiveSelectionBackground,#3a3d4120);border-radius:6px}
 .git-stat-val{font-family:'Cascadia Code',monospace;font-size:20px;font-weight:600;font-feature-settings:"tnum"}
@@ -351,10 +353,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .git-msgs{border-top:1px solid var(--vscode-panel-border,#47474718);padding-top:6px}
 .git-msg-label{font-size:9px;color:var(--vscode-descriptionForeground,#999);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:3px}
 .git-msg{font-family:'Cascadia Code',monospace;font-size:11px;padding:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wrapped-banner{background:linear-gradient(135deg,#1a133320,#1c103320);border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:all var(--t)}
-.wrapped-banner:hover{border-color:var(--vscode-focusBorder,#007acc60);transform:translateY(-1px)}
-.wrapped-badge{display:inline-block;padding:3px 12px;border-radius:10px;font-size:10px;font-weight:600;background:var(--vscode-button-background,#007acc15);color:var(--vscode-button-background,#58a6ff);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em}
-.wrapped-big{font-size:36px;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--vscode-button-background,#58a6ff),#a371f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.wrapped-banner{background:var(--vscode-editorWidget-background,var(--vscode-input-background,#3c3c3c));border:1px solid var(--vscode-panel-border,#474747);border-radius:var(--r);padding:18px;text-align:center;cursor:pointer;transition:all var(--t)}
+.wrapped-banner:hover{background:var(--vscode-list-hoverBackground,var(--vscode-editorWidget-background,#3c3c3c));border-color:var(--vscode-focusBorder,#007acc60);transform:translateY(-1px)}
+.wrapped-badge{display:inline-block;padding:3px 12px;border-radius:10px;font-size:10px;font-weight:600;background:var(--vscode-badge-background,#007acc);color:var(--vscode-badge-foreground,#fff);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em}
+.wrapped-big{font-size:36px;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,var(--vscode-textLink-foreground,#58a6ff),var(--vscode-button-background,#007acc));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .wrapped-sub{font-size:11px;color:var(--vscode-descriptionForeground,#999);margin-top:2px}
 .footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px}
 .footer-summary{font-size:10px;color:var(--vscode-descriptionForeground,#999);display:flex;gap:6px;flex-wrap:wrap}
@@ -364,7 +366,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 .btn:focus-visible{outline:2px solid var(--vscode-focusBorder,#007acc);outline-offset:2px}
 .btn-secondary{background:transparent;border:1px solid var(--vscode-panel-border,#474747);color:var(--vscode-editor-foreground,#ccc)}
 .btn-secondary:hover{background:var(--vscode-list-hoverBackground,#2a2d2e)}
-.modal-overlay{display:none;position:fixed;inset:0;background:#00000060;z-index:1000;align-items:center;justify-content:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--vscode-widget-shadow,#00000060);z-index:1000;align-items:center;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:var(--vscode-input-background,#3c3c3c);border:1px solid var(--vscode-panel-border,#474747);border-radius:12px;padding:24px;max-width:520px;width:92%;max-height:80vh;overflow-y:auto}
 .modal-title{font-size:15px;font-weight:600;margin-bottom:16px}
@@ -386,6 +388,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
 :focus-visible{outline:2px solid var(--vscode-focusBorder,#007acc);outline-offset:1px}
 @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
 `;
+// ─── Icons (codicon-style inline SVG) ───
+const ICONS = {
+    clock: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 4.25V8l2.6 1.6"/></svg>',
+    flame: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.7c.4 2 1.7 3 2.7 4.1 1 1.1 1.8 2.2 1.8 3.9A4.5 4.5 0 0 1 8 14.3a4.5 4.5 0 0 1-4.5-4.8C3.5 7.5 5.6 6.2 6.2 3.5c.9.8 1.6 1.6 1.8 2.5.4-.9.4-2.2 0-4.3Z"/></svg>',
+    bars: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.75 13.25V8.25M6.5 13.25V3.25M10.25 13.25V6.25"/><path d="M1.5 13.25h13"/></svg>',
+    target: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><circle cx="8" cy="8" r="2.6"/><circle cx="8" cy="8" r="0.55" fill="currentColor" stroke="none"/></svg>',
+    code: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 4.5 2.5 8l3 3.5M10.5 4.5l3 3.5-3 3.5"/></svg>',
+    folder: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.75 4.25a1 1 0 0 1 1-1h3l1.25 1.5h6.25a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H2.75a1 1 0 0 1-1-1Z"/></svg>',
+    gitBranch: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="6" r="1.5"/><path d="M4.5 5v6M11.5 7.5c0 2-1.6 2.5-4 2.5H6.5"/></svg>',
+    calendar: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.25" y="3.25" width="11.5" height="10.5" rx="1.2"/><path d="M2.25 6.25h11.5M5.25 1.75v3M10.75 1.75v3"/></svg>',
+    trending: '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 11.5 6 7.5l2.5 2.5 5-5"/><path d="M9.75 5h3.75v3.75"/></svg>',
+    chevronLeft: '<svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>',
+    chevronRight: '<svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg>'
+};
 // ─── HTML Components ────────────────────
 function goalBar(label, current, target, unit, done) {
     const p = pct(current, target);
@@ -411,7 +427,7 @@ function projectCardHTML(p) {
 function projectListHTML(sort, showAll = false) {
     const pa = Object.values(projects);
     if (!pa.length)
-        return '<div class="lempty"><strong>No projects tracked yet.</strong><br>Open a workspace folder and start coding. DevPulse will automatically detect your project.</div>';
+        return '<div class="lempty"><strong>No projects tracked yet.</strong><br>Open a workspace folder to begin.</div>';
     if (sort === 'time')
         pa.sort((a, b) => b.totalMs - a.totalMs);
     else if (sort === 'recent')
@@ -432,7 +448,7 @@ function projectListHTML(sort, showAll = false) {
 function gitHTML() {
     const g = getGitStats();
     if (!g.available || !g.repoName)
-        return '<div class="lempty"><strong>No Git repository detected.</strong><br>Open a folder with a Git repository to see commits, branches, and activity.</div>';
+        return '<div class="lempty"><strong>No Git repository detected.</strong><br>Open a folder with .git to see activity.</div>';
     const msgs = g.recentMessages.length ? g.recentMessages.map(m => `<div class="git-msg">${m.slice(0, 64)}${m.length > 64 ? '\u2026' : ''}</div>`).join('') : '<div class="git-msg" style="opacity:0.4">No recent commits</div>';
     return `<div class="git-header"><span class="git-repo">${g.repoName}</span><span class="git-branch">${g.branch}</span></div><div class="git-grid"><div class="git-stat"><div class="git-stat-val">${g.commitsToday}</div><div class="git-stat-lbl">Today</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsWeek}</div><div class="git-stat-lbl">This Week</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsMonth}</div><div class="git-stat-lbl">This Month</div></div><div class="git-stat"><div class="git-stat-val">${g.commitsTotal}</div><div class="git-stat-lbl">Total</div></div></div><div class="git-files">${g.filesChanged} files changed</div><div class="git-msgs"><div class="git-msg-label">Recent commits</div>${msgs}</div>`;
 }
@@ -475,7 +491,7 @@ function buildDashboardHTML() {
         lr += `<div class="lr"><span class="ld" style="background:${c}"></span><span class="ln">${l}</span><span class="lp">${p}%</span></div>`;
     }
     if (!lr)
-        lr = '<div class="lempty"><strong>No language data yet.</strong><br>Save a file to see your language breakdown.</div>';
+        lr = '<div class="lempty"><strong>No language activity yet.</strong><br>Save a file to see your breakdown.</div>';
     let hm = '';
     const nw = new Date();
     for (let w = 25; w >= 0; w--)
@@ -517,33 +533,52 @@ function buildDashboardHTML() {
     const wk = weekStartStr();
     const ek = todayStr();
     let twm = 0, twl = 0, tws = 0, twls = 0;
-    const twlg = {};
     const dm = {};
+    const dByDate = {};
     const dn = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     for (const [k, d] of Object.entries(savedData)) {
         if (k === '_projects' || k < wk || k > ek)
             continue;
         const dy = d;
-        twm += dy.ms || 0;
+        const ms = dy.ms || 0;
+        twm += ms;
         twl += dy.lines || 0;
         tws += dy.sessions || 0;
-        if (dy.ms > twls)
-            twls = dy.ms;
-        for (const [ln, nn] of Object.entries(dy.langs || {}))
-            twlg[ln] = (twlg[ln] || 0) + nn;
+        if (ms > twls)
+            twls = ms;
+        dByDate[k] = ms;
         const dt = new Date(k);
-        dm[dn[dt.getDay()]] = (dm[dn[dt.getDay()]] || 0) + (dy.ms || 0);
+        dm[dn[dt.getDay()]] = (dm[dn[dt.getDay()]] || 0) + ms;
     }
     twm += sessionMs;
     twl += sessionLines;
     tws += focusSessions;
-    let bd_ = '', bm_ = 0;
+    if (sessionMs > 0)
+        dByDate[ek] = (dByDate[ek] || 0) + sessionMs;
+    let favDay = '', favMs = 0;
     for (const [nn, dd] of Object.entries(dm)) {
-        if (dd > bm_) {
-            bm_ = dd;
-            bd_ = nn;
+        if (dd > favMs) {
+            favMs = dd;
+            favDay = nn;
         }
     }
+    let bdKey = '', bm_ = 0;
+    for (const [k, ms] of Object.entries(dByDate)) {
+        if (ms > bm_) {
+            bm_ = ms;
+            bdKey = k;
+        }
+    }
+    const bd_ = bdKey ? `${dn[new Date(bdKey).getDay()].slice(0, 3)} ${Number(bdKey.slice(8, 10))}` : '—';
+    let pkHour = -1, pkMs = 0;
+    for (const [h, ms] of Object.entries(hourBuckets)) {
+        if (ms > pkMs) {
+            pkMs = ms;
+            pkHour = Number(h);
+        }
+    }
+    const pkLabel = pkHour >= 0 ? `${String(pkHour).padStart(2, '0')}:00` : '—';
+    const projWeek = Object.values(projects).filter(p => Array.from(p.daysActive).some(dd => dd >= wk && dd <= ek)).length;
     const lwk = weekStartStr(1);
     let lwm = 0, lwl = 0;
     for (const [k, d] of Object.entries(savedData)) {
@@ -555,14 +590,18 @@ function buildDashboardHTML() {
     }
     const tch = lwm > 0 ? Math.round(((twm - lwm) / lwm) * 100) : 0;
     const da = Object.keys(dm).length;
+    const lch = lwl > 0 ? Math.round(((twl - lwl) / lwl) * 100) : 0;
     const insightsHTML = [
-        { l: 'Coding time', v: formatDuration(twm), c: tch, cl: tch >= 0 ? `+${Math.abs(tch)}%` : `-${Math.abs(tch)}%` },
-        { l: 'Daily avg', v: formatDuration(da > 0 ? Math.floor(twm / da) : 0), c: 0, cl: `${da}/7 days` },
-        { l: 'Best day', v: bd_, c: 0, cl: formatDuration(bm_) },
-        { l: 'Lines', v: formatNumber(twl), c: lwl > 0 ? Math.round(((twl - lwl) / lwl) * 100) : 0, cl: lwl > 0 ? `${twl > lwl ? '+' : ''}${Math.round(((twl - lwl) / lwl) * 100)}%` : '' },
-        { l: 'Sessions', v: String(tws), c: 0, cl: '25 min blocks' },
-        { l: 'Longest', v: formatDuration(twls), c: 0, cl: '' },
-    ].map(x => `<div class="insight-card"><div class="insight-icon">${x.l === 'Coding time' ? '&#9201;' : x.l === 'Best day' ? '&#128200;' : x.l === 'Lines' ? '&#9000;' : x.l === 'Sessions' ? '&#127919;' : '&#128293;'}</div><div class="insight-body"><div class="insight-label">${x.l}</div><div class="insight-value">${x.v}</div>${x.cl ? `<div class="insight-change ${x.c > 0 ? 'insight-up' : x.c < 0 ? 'insight-down' : 'insight-neutral'}">${x.cl}</div>` : ''}</div></div>`).join('');
+        { i: 'clock', l: 'Coding time', v: formatDuration(twm), c: tch, cl: tch >= 0 ? `+${Math.abs(tch)}%` : `-${Math.abs(tch)}%` },
+        { i: 'calendar', l: 'Daily avg', v: formatDuration(da > 0 ? Math.floor(twm / da) : 0), c: 0, cl: `${da}/7 days` },
+        { i: 'bars', l: 'Best day', v: bd_, c: 0, cl: formatDuration(bm_) },
+        { i: 'code', l: 'Lines', v: formatNumber(twl), c: lch, cl: lwl > 0 ? `${lch > 0 ? '+' : ''}${lch}%` : 'this week' },
+        { i: 'target', l: 'Sessions', v: String(tws), c: 0, cl: '25 min blocks' },
+        { i: 'flame', l: 'Longest', v: formatDuration(twls), c: 0, cl: 'single session' },
+        { i: 'trending', l: 'Favorite day', v: favDay || '—', c: 0, cl: favDay ? formatDuration(favMs) : 'No activity yet' },
+        { i: 'clock', l: 'Peak hour', v: pkLabel, c: 0, cl: pkMs > 0 ? 'this session' : 'Keep coding' },
+        { i: 'folder', l: 'Projects', v: String(projWeek), c: 0, cl: 'this week' },
+    ].map(x => `<div class="insight-card"><div class="insight-icon">${ICONS[x.i]}</div><div class="insight-body"><div class="insight-label">${x.l}</div><div class="insight-value">${x.v}</div>${x.cl ? `<div class="insight-change ${x.c > 0 ? 'insight-up' : x.c < 0 ? 'insight-down' : 'insight-neutral'}">${x.cl}</div>` : ''}</div></div>`).join('');
     const projCount = Object.keys(projects).length;
     const tcClass = tr > 10 ? 'trend-up' : tr < -10 ? 'trend-down' : 'trend-neutral';
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DevPulse</title><style>${CSS}</style></head><body>
@@ -574,11 +613,11 @@ function buildDashboardHTML() {
 </div>
 <div class="card ai d1"><div class="card-header"><span class="card-title">Goals</span><div class="tabs"><button class="tab active" onclick="switchTab('daily')" aria-pressed="true">Daily</button><button class="tab" onclick="switchTab('weekly')" aria-pressed="false">Weekly</button><button class="tab" onclick="switchTab('monthly')" aria-pressed="false">Monthly</button></div></div><div id="tab-daily" class="tab-content active">${goalBar(g.daily.time.label, dt, g.daily.time.target, g.daily.time.unit, dtD)}${goalBar(g.daily.lines.label, tl, g.daily.lines.target, g.daily.lines.unit, dlD)}${goalBar(g.daily.sessions.label, ts, g.daily.sessions.target, g.daily.sessions.unit, dsD)}</div><div id="tab-weekly" class="tab-content">${goalBar(g.weekly.time.label, wt, g.weekly.time.target, g.weekly.time.unit, wtD)}${goalBar(g.weekly.days.label, wd, g.weekly.days.target, g.weekly.days.unit, wdD)}</div><div id="tab-monthly" class="tab-content">${goalBar(g.monthly.time.label, mt, g.monthly.time.target, g.monthly.time.unit, mtD)}${goalBar(g.monthly.days.label, md, g.monthly.days.target, g.monthly.days.unit, mdD)}</div></div>
 <div class="wrapped-banner ai d2" onclick="openWrapped()" tabindex="0" role="button" aria-label="Open Developer Wrapped" onkeydown="if(event.key==='Enter')openWrapped()"><div class="wrapped-badge">Annual Report</div><div class="wrapped-big">2026</div><div class="wrapped-sub">View your year in code</div></div>
-<div class="card ai d2"><div class="card-header"><span class="card-title">Git Activity</span>${git.available ? `<span class="card-sub">${git.repoName}</span>` : '<span class="card-sub">Not available</span>'}</div>${gitHTML()}</div>
-<div class="card ai d2"><div class="card-header"><span class="card-title">This Week</span><span class="card-sub">vs last week</span></div><div class="insights-grid">${insightsHTML}</div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--g)" class="ai d3"><div class="card"><div class="card-header"><span class="card-title">Activity</span><span class="card-sub">6 months</span></div><div class="hmg">${hm}</div><div class="leg">Less<div class="legc" style="background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41)"></div><div class="legc hl1"></div><div class="legc hl2"></div><div class="legc hl3"></div><div class="legc hl4"></div>More</div></div><div class="card"><div class="card-header"><span class="card-title">This Week</span></div><div class="bars">${wb}</div></div></div>
-<div class="card ai d3"><div class="card-header"><span class="card-title">Projects</span><span class="card-sub">${projCount} tracked</span></div><div class="sort-row"><button class="sort-btn active" onclick="sortProjects('time')">Most Time</button><button class="sort-btn" onclick="sortProjects('recent')">Recent</button><button class="sort-btn" onclick="sortProjects('active')">Most Active</button></div><div id="project-list">${projectListHTML('time')}</div></div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--g)" class="ai d3"><div class="card"><div class="card-header"><span class="card-title">Languages</span><span class="card-sub">Today</span></div>${lr}</div><div class="card"><div class="card-header"><span class="card-title">Overview</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="metric-value" style="font-size:18px" id="dv-lines">${formatNumber(tl)}</div><div class="metric-label">Lines today</div></div><div><div class="metric-value" style="font-size:18px">${formatNumber(sessionSaves)}</div><div class="metric-label">Saves</div></div><div><div class="metric-value" style="font-size:18px">${th}h</div><div class="metric-label">All time</div></div><div><div class="metric-value" style="font-size:18px">${bs}d</div><div class="metric-label">Best streak</div></div></div></div></div>
+<div class="card ai d2"><div class="card-header"><span class="card-title">${ICONS.gitBranch}Git Activity</span>${git.available ? `<span class="card-sub">${git.repoName}</span>` : '<span class="card-sub">Not available</span>'}</div>${gitHTML()}</div>
+<div class="card ai d2"><div class="card-header"><span class="card-title">${ICONS.trending}Weekly Insights</span><span class="card-sub">vs last week</span></div><div class="insights-grid">${insightsHTML}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--g)" class="ai d3"><div class="card"><div class="card-header"><span class="card-title">${ICONS.calendar}Activity</span><span class="card-sub">6 months</span></div><div class="hmg">${hm}</div><div class="leg">Less<div class="legc" style="background:var(--vscode-editor-inactiveSelectionBackground,#3a3d41)"></div><div class="legc hl1"></div><div class="legc hl2"></div><div class="legc hl3"></div><div class="legc hl4"></div>More</div></div><div class="card"><div class="card-header"><span class="card-title">${ICONS.bars}Weekly Activity</span></div><div class="bars">${wb}</div></div></div>
+<div class="card ai d3"><div class="card-header"><span class="card-title">${ICONS.folder}Projects</span><span class="card-sub">${projCount} tracked</span></div><div class="sort-row"><button class="sort-btn active" onclick="sortProjects('time')">Most Time</button><button class="sort-btn" onclick="sortProjects('recent')">Recent</button><button class="sort-btn" onclick="sortProjects('active')">Most Active</button></div><div id="project-list">${projectListHTML('time')}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--g)" class="ai d3"><div class="card"><div class="card-header"><span class="card-title">${ICONS.code}Languages</span><span class="card-sub">Today</span></div>${lr}</div><div class="card"><div class="card-header"><span class="card-title">${ICONS.clock}Overview</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="metric-value" style="font-size:18px" id="dv-lines">${formatNumber(tl)}</div><div class="metric-label">Lines today</div></div><div><div class="metric-value" style="font-size:18px">${formatNumber(sessionSaves)}</div><div class="metric-label">Saves</div></div><div><div class="metric-value" style="font-size:18px">${th}h</div><div class="metric-label">All time</div></div><div><div class="metric-value" style="font-size:18px">${bs}d</div><div class="metric-label">Best streak</div></div></div></div></div>
 <div class="footer ai d4"><div class="footer-summary">All time <strong>${th}h</strong> &middot; <strong>${formatNumber(tll)}</strong> lines${git.available ? ` &middot; <strong>${git.commitsTotal}</strong> commits` : ''}</div><button class="btn" onclick="openShareModal()">Share</button></div>
 </div>
 <div class="modal-overlay" id="shareModal" role="dialog" aria-modal="true" aria-label="Share your progress"><div class="modal"><div class="modal-title">Share your progress</div><div class="template-list"><div class="template-item selected" onclick="selectTemplate('professional',this)"><div class="template-preview tp-pro">Pro</div><div class="template-info"><div class="template-name">Professional</div><div class="template-desc">Clean layout for LinkedIn and portfolios</div></div></div><div class="template-item" onclick="selectTemplate('minimal',this)"><div class="template-preview tp-min">Min</div><div class="template-info"><div class="template-name">Minimal</div><div class="template-desc">Typography-focused, black and white</div></div></div><div class="template-item" onclick="selectTemplate('github',this)"><div class="template-preview tp-gh">Git</div><div class="template-info"><div class="template-name">GitHub</div><div class="template-desc">Developer aesthetic for your profile</div></div></div><div class="template-item" onclick="selectTemplate('wrapped',this)"><div class="template-preview tp-wr">Wrp</div><div class="template-info"><div class="template-name">Wrapped</div><div class="template-desc">Annual report with summary stats</div></div></div></div><div class="modal-actions"><button class="btn btn-secondary" onclick="closeShareModal()">Cancel</button><button class="btn" onclick="generateShareCard()">Copy to Clipboard</button></div></div></div>
@@ -633,11 +672,49 @@ function buildWrappedHTML(period) {
     const tl = totalLines();
     const bs = bestStreak();
     const topLang = Object.entries(todayLangs()).sort((a, b) => b[1] - a[1])[0];
-    const tp = Object.values(projects).sort((a, b) => b.totalMs - a.totalMs)[0];
+    const topProjects = Object.values(projects).sort((a, b) => b.totalMs - a.totalMs).slice(0, 3);
+    const tp = topProjects[0];
     const git = getGitStats();
     const title = period === 'yearly' ? '2026' : new Date().toLocaleString('default', { month: 'long' });
     const st = period === 'yearly' ? 'Your Year in Code' : 'Your Month in Code';
-    const slides = git.available && git.commitsTotal > 0 ? 8 : 7;
+    // Top 3 projects as a proportional horizontal bar chart
+    const tpMax = topProjects.length ? topProjects[0].totalMs || 1 : 1;
+    const projBars = topProjects.length
+        ? topProjects.map(p => `<div class="prow"><div class="pname" title="${p.name}">${p.name}</div><div class="ptrack"><div class="pfill" style="width:${Math.max(Math.round((p.totalMs / tpMax) * 100), 4)}%"></div></div><div class="pval">${Math.floor(p.totalMs / 3600000)}h</div></div>`).join('')
+        : '<div class="wl2">No projects tracked yet</div>';
+    // Mini 6-month activity heatmap
+    const nw = new Date();
+    let heat = '';
+    for (let w = 25; w >= 0; w--)
+        for (let d = 6; d >= 0; d--) {
+            const dt = new Date(nw);
+            dt.setDate(dt.getDate() - (w * 7 + d));
+            const k = dt.toISOString().slice(0, 10);
+            const ms = k === todayStr() ? todayMs() : (savedData[k]?.ms || 0);
+            const h = ms / 3600000;
+            let lv = 0;
+            if (h > 0)
+                lv = 1;
+            if (h > 0.5)
+                lv = 2;
+            if (h > 2)
+                lv = 3;
+            if (h > 4)
+                lv = 4;
+            heat += `<div class="whmc whl${lv}" title="${k}: ${formatDuration(ms)}"></div>`;
+        }
+    const slideArr = [];
+    slideArr.push(`<div class="slide sa"><div class="anim"><div class="wl">Developer Wrapped</div></div><div class="anim ad1"><div class="wb">${title}</div></div><div class="anim ad2"><div class="ws">${st}</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">You coded for</div></div><div class="anim ad1"><div class="wv countup" data-count="${th}" data-suffix="h" style="color:#58a6ff">0h</div></div><div class="anim ad2"><div class="wl2"><span class="countup" data-count="${tl}" data-fmt="k">0</span> lines written</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">Your dedication</div></div><div class="anim ad1"><div class="wv countup" data-count="${bs}" data-suffix="d">0d</div></div><div class="anim ad2"><div class="wl2">longest streak</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">Top language</div></div><div class="anim ad1"><div class="wv" style="color:#a371f7">${topLang ? topLang[0] : '—'}</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">Main project</div></div><div class="anim ad1"><div class="wv" style="font-size:44px;color:#3fb950">${tp ? tp.name : '—'}</div></div><div class="anim ad2"><div class="wl2">${tp ? Math.floor(tp.totalMs / 3600000) : 0}h spent</div></div></div>`);
+    if (git.available && git.commitsTotal > 0)
+        slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">You shipped</div></div><div class="anim ad1"><div class="wv countup" data-count="${git.commitsTotal}" style="color:#3fb950">0</div></div><div class="anim ad2"><div class="wl2">commits</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">Top projects</div></div><div class="anim ad1" style="width:100%;max-width:520px">${projBars}</div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wl">Last 6 months</div></div><div class="anim ad1"><div class="wheat">${heat}</div></div><div class="anim ad2"><div class="wl2">Every square is a day you coded</div></div></div>`);
+    slideArr.push(`<div class="slide sa"><div class="anim"><div class="wv" style="color:#f78166">Keep building.</div></div></div>`);
+    slideArr.push(`<div class="slide sd"><div class="anim"><div class="wb" style="font-size:44px">See you next ${period === 'yearly' ? 'year' : 'month'}.</div></div><div class="anim ad2"><div style="color:#484f58;font-size:11px;margin-top:24px">Tracked by <strong style="color:#8b949e">DevPulse</strong> &middot; All data stored locally</div></div></div>`);
     return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>DevPulse Wrapped</title><style>
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0d1117;color:#c9d1d9;overflow:hidden;height:100vh}
 .slide{display:none;height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}.slide.active{display:flex}
@@ -646,23 +723,24 @@ function buildWrappedHTML(period) {
 .wb{font-size:88px;font-weight:800;letter-spacing:-0.04em;line-height:1;background:linear-gradient(135deg,#58a6ff,#a371f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .ws{font-size:18px;color:#8b949e;margin-top:8px;font-weight:300}
 .wv{font-size:64px;font-weight:700;letter-spacing:-0.03em;line-height:1}.wl2{font-size:15px;color:#8b949e;margin-top:6px}
+.prow{display:flex;align-items:center;gap:12px;margin:11px 0}
+.pname{width:120px;text-align:right;font-size:13px;color:#c9d1d9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptrack{flex:1;height:14px;border-radius:7px;background:#161b22;overflow:hidden}
+.pfill{height:100%;border-radius:7px;background:linear-gradient(90deg,#58a6ff,#a371f7);transition:width 0.8s cubic-bezier(.2,.7,.3,1)}
+.pval{width:46px;text-align:left;font-size:12px;color:#8b949e;font-family:'Cascadia Code',monospace}
+.wheat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px}
+.whmc{width:12px;height:12px;border-radius:2px;background:#161b22}
+.whl1{background:#0e4429}.whl2{background:#006d32}.whl3{background:#26a641}.whl4{background:#39d353}
 .nav-dots{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:100}
 .nd{width:6px;height:6px;border-radius:50%;background:#30363d;cursor:pointer;transition:all 0.2s;border:none}
 .nd.active{background:#58a6ff;width:20px;border-radius:3px}
-.na{position:fixed;top:50%;transform:translateY(-50%);font-size:24px;color:#8b949e;cursor:pointer;z-index:100;background:none;border:none;padding:12px 16px}.na:hover{color:#c9d1d9}.np{left:8px}.nn{right:8px}
-@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.anim{animation:fu 0.5s ease forwards;opacity:0}.ad1{animation-delay:0.08s}.ad2{animation-delay:0.16s}.ad3{animation-delay:0.24s}
-@media(max-width:600px){.wb{font-size:56px}.wv{font-size:40px}}
+.na{position:fixed;top:50%;transform:translateY(-50%);color:#8b949e;cursor:pointer;z-index:100;background:none;border:none;padding:12px 16px}.na:hover{color:#c9d1d9}.np{left:8px}.nn{right:8px}.na svg{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}.anim{animation:fu 0.5s ease forwards;opacity:0}.ad1{animation-delay:0.1s}.ad2{animation-delay:0.2s}.ad3{animation-delay:0.3s}
+@media(max-width:600px){.wb{font-size:56px}.wv{font-size:40px}.pname{width:80px}}
 </style></head><body>
-<div class="slide sa active" id="s0"><div class="anim"><div class="wl">Developer Wrapped</div></div><div class="anim ad1"><div class="wb">${title}</div></div><div class="anim ad2"><div class="ws">${st}</div></div></div>
-<div class="slide sd" id="s1"><div class="anim"><div class="wl">You coded for</div></div><div class="anim ad1"><div class="wv" style="color:#58a6ff">${th}h</div></div><div class="anim ad2"><div class="wl2">${formatNumber(tl)} lines written</div></div></div>
-<div class="slide sd" id="s2"><div class="anim"><div class="wl">Your dedication</div></div><div class="anim ad1"><div class="wv">${bs}d</div></div><div class="anim ad2"><div class="wl2">longest streak</div></div></div>
-<div class="slide sd" id="s3"><div class="anim"><div class="wl">Top language</div></div><div class="anim ad1"><div class="wv" style="color:#a371f7">${topLang ? topLang[0] : '—'}</div></div></div>
-<div class="slide sd" id="s4"><div class="anim"><div class="wl">Main project</div></div><div class="anim ad1"><div class="wv" style="font-size:44px;color:#3fb950">${tp ? tp.name : '—'}</div></div><div class="anim ad2"><div class="wl2">${tp ? Math.floor(tp.totalMs / 3600000) : 0}h spent</div></div></div>
-${git.available && git.commitsTotal > 0 ? `<div class="slide sd" id="s5"><div class="anim"><div class="wl">You shipped</div></div><div class="anim ad1"><div class="wv" style="color:#3fb950">${git.commitsTotal}</div></div><div class="anim ad2"><div class="wl2">commits</div></div></div>` : ''}
-<div class="slide sa" id="s${slides - 2}"><div class="anim"><div class="wv" style="color:#f78166">Keep building.</div></div></div>
-<div class="slide sd" id="s${slides - 1}"><div class="anim"><div class="wb" style="font-size:44px">See you next ${period === 'yearly' ? 'year' : 'month'}.</div></div><div class="anim ad2"><div style="color:#484f58;font-size:11px;margin-top:24px">Tracked by <strong style="color:#8b949e">DevPulse</strong> &middot; All data stored locally</div></div></div>
-<button class="na np" onclick="pv()" aria-label="Previous">&#8592;</button><button class="na nn" onclick="nx()" aria-label="Next">&#8594;</button><div class="nav-dots" id="nd"></div>
-<script>var ts=${slides},c=0;function sh(n){document.querySelectorAll('.slide').forEach(function(s){s.classList.remove('active')});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.nd').forEach(function(d,i){d.classList.toggle('active',i===n)})}function nx(){c=(c+1)%ts;sh(c)}function pv(){c=(c-1+ts)%ts;sh(c)}var nd=document.getElementById('nd');for(var i=0;i<ts;i++){var d=document.createElement('button');d.className='nd'+(i===0?' active':'');d.setAttribute('aria-label','Slide '+(i+1));d.onclick=(function(idx){return function(){c=idx;sh(c)}})(i);nd.appendChild(d)}document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowDown')nx();if(e.key==='ArrowLeft'||e.key==='ArrowUp')pv()});</script></body></html>`;
+${slideArr.join('')}
+<button class="na np" onclick="pv()" aria-label="Previous">${ICONS.chevronLeft}</button><button class="na nn" onclick="nx()" aria-label="Next">${ICONS.chevronRight}</button><div class="nav-dots" id="nd"></div>
+<script>var sl=document.querySelectorAll('.slide'),ts=sl.length,c=0;function fmtK(n){return n>=1000?(n/1000).toFixed(1)+'K':String(n)}function cu(el){var end=parseFloat(el.dataset.count||'0'),suf=el.dataset.suffix||'',isK=el.dataset.fmt==='k',t0=null;el.textContent='0'+suf;function step(t){if(t0===null)t0=t;var p=Math.min((t-t0)/800,1);p=1-Math.pow(1-p,3);var v=end*p;el.textContent=(isK?fmtK(Math.round(v)):String(Math.round(v)))+suf;if(p<1)requestAnimationFrame(step)}requestAnimationFrame(step)}function sh(n){sl.forEach(function(s){s.classList.remove('active')});sl[n].classList.add('active');document.querySelectorAll('.nd').forEach(function(d,i){d.classList.toggle('active',i===n)});sl[n].querySelectorAll('.countup').forEach(cu)}function nx(){c=(c+1)%ts;sh(c)}function pv(){c=(c-1+ts)%ts;sh(c)}var nd=document.getElementById('nd');for(var i=0;i<ts;i++){var d=document.createElement('button');d.className='nd'+(i===0?' active':'');d.setAttribute('aria-label','Slide '+(i+1));d.onclick=(function(idx){return function(){c=idx;sh(c)}})(i);nd.appendChild(d)}document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowDown')nx();if(e.key==='ArrowLeft'||e.key==='ArrowUp')pv()});sh(0);</script></body></html>`;
 }
 // ─── Activate ────────────────────────────
 function activate(context) {
@@ -689,6 +767,7 @@ function activate(context) {
         lastActivity = Date.now(); }));
     activeTimer = setInterval(() => { if (Date.now() - lastActivity < IDLE_TIMEOUT_MS) {
         sessionMs += ACTIVE_TICK_MS;
+        hourBuckets[new Date().getHours()] = (hourBuckets[new Date().getHours()] || 0) + ACTIVE_TICK_MS;
         if (activeProject) {
             const p = projects[activeProject];
             if (p) {
