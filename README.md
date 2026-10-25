@@ -97,6 +97,8 @@ DevPulse writes a single JSON file to your VS Code storage directory and never s
 
 DevPulse is open-source and we welcome contributions! Whether you want to fix a bug, add a new feature, or improve the documentation, check out our [open issues](https://github.com/BistaDinesh03/devpulse-tracker/issues). Looking to get started? We have a list of [good first issues](https://github.com/BistaDinesh03/devpulse-tracker/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) to help you jump in.
 
+Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to help keep the DevPulse community welcoming and respectful.
+
 ## License
 
 MIT. See [LICENSE](LICENSE) for details.
